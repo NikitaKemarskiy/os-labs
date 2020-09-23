@@ -117,7 +117,7 @@ System.out.println(allocator.dump());
 ![freeing 24 and 32 bytes blocks](img/5.png)
 ---
 
-### The allocating of *80* bytes of memory and then realloc it
+### The allocating of *24* bytes of memory and then realloc it
 #### Increasing the block will free current and allocate a new one
 ##### Code
 ```
