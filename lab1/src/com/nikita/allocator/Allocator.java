@@ -12,8 +12,9 @@ public class Allocator {
     private static boolean checkAllocatorSize(int size) {
         return size > Header.HEADER_SIZE && size % 4 == 0;
     }
-    private static boolean checkIndex(int index) {
-        return index >= 0 && index % 4 == 0;
+
+    private boolean checkIndex(int index) {
+        return startUnallocIndex > index && index >= 0 && index % 4 == 0 && index < size - Header.HEADER_SIZE;
     }
 
     private boolean checkBlockSize(int size) {
@@ -51,6 +52,19 @@ public class Allocator {
             : startUnallocIndex;
     }
 
+    // Split block into two parts
+    private void splitBlock(Header header, int size, int splitIndex) throws InvalidIndexException {
+        int splitSize = header.getSize() - size - Header.HEADER_SIZE;
+        // New block
+        Header splitHeader = new Header(splitSize, size);
+        writeHeader(splitIndex, splitHeader);
+        // Set found header new size
+        header.setSize(size);
+        // Update next header prev size (next to split new block)
+        updateNextHeaderSizePrev(splitIndex);
+        free(splitIndex);
+    }
+
     public Allocator() {
         size = DEFAULT_SIZE;
         buffer = new byte[DEFAULT_SIZE];
@@ -66,6 +80,7 @@ public class Allocator {
         startUnallocIndex = 0;
     }
 
+    // Alloc memory for the new block
     public int alloc(int size) throws InvalidSizeException {
         if (!checkBlockSize(size)) {
             throw new InvalidSizeException();
@@ -93,14 +108,11 @@ public class Allocator {
         if (header.getSize() > size + Header.HEADER_SIZE) {
             // Split blocks into two
             int splitIndex = index + Header.HEADER_SIZE + size;
-            int splitSize = header.getSize() - size - Header.HEADER_SIZE;
-            // New block
-            Block splitBlock = new Block(splitSize, size);
-            ArrayUtils.insertByteArray(buffer, splitBlock.toByteArray(), splitIndex);
-            // Set found header new size
-            header.setSize(size);
-            // Update next header prev size (next to split new block)
-            updateNextHeaderSizePrev(splitIndex);
+            try {
+                splitBlock(header, size, splitIndex);
+            } catch (InvalidIndexException err) {
+                System.err.println(err);
+            }
         }
 
         // Set header as occupied
@@ -112,15 +124,46 @@ public class Allocator {
         return index;
     }
 
-    public int realloc(int index, int size) throws InvalidIndexException {
+    public int realloc(int index, int size) throws InvalidIndexException, InvalidSizeException {
         if (!checkIndex(index)) {
             throw new InvalidIndexException();
         }
         Header header = getHeader(index);
 
+        // Realloc needs less size than block has now
+        // and current block can be split
+        if (size < header.getSize() - Header.HEADER_SIZE) {
+            // Split blocks into two
+            int splitIndex = index + Header.HEADER_SIZE + size;
+            splitBlock(header, size, splitIndex);
+
+            // Set header as occupied
+            header.setFree(false);
+
+            // Write header to buffer
+            writeHeader(index, header);
+        }
+        // Realloc needs more size than block has now or less size
+        // but remainder of the size isn't enough to create new block
+        else if (size != header.getSize()) {
+            byte[] byteArray = ArrayUtils.splitByteArray(
+                buffer,
+                index + Header.HEADER_SIZE,
+                index + Header.HEADER_SIZE + header.getSize()
+            );
+            // Alloc new block
+            int newIndex = alloc(size);
+            write(newIndex, byteArray);
+            // Free old block
+            free(index);
+            // Return new index
+            return newIndex;
+        }
+
         return index;
     }
 
+    // Free the block
     public void free(int index) throws InvalidIndexException {
         if (!checkIndex(index)) {
             throw new InvalidIndexException();
@@ -169,6 +212,7 @@ public class Allocator {
         updateNextHeaderSizePrev(index);
     }
 
+    // Dump current allocator state
     public String dump() {
         String dump = "";
         int index = 0;
@@ -187,11 +231,24 @@ public class Allocator {
         return dump;
     }
 
-    public void write(int index, byte[] byteArray) {
-        //...
+    // Write data to the block
+    public void write(int index, byte[] byteArray) throws InvalidIndexException {
+        if (!checkIndex(index)) {
+            throw new InvalidIndexException();
+        }
+        ArrayUtils.insertByteArray(buffer, byteArray, index + Header.HEADER_SIZE);
     }
 
-    public byte[] read(int index) {
-        return null;
+    // Read data from the block
+    public byte[] read(int index) throws InvalidIndexException {
+        if (!checkIndex(index)) {
+            throw new InvalidIndexException();
+        }
+        Header header = getHeader(index);
+        return ArrayUtils.splitByteArray(
+            buffer,
+            index + Header.HEADER_SIZE,
+            index + Header.HEADER_SIZE + header.getSize()
+        );
     }
 }

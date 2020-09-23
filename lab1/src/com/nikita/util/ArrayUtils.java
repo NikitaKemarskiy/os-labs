@@ -5,6 +5,9 @@ public class ArrayUtils {
 
     public static int insertByteArray(byte[] arr1, byte[] arr2, int index) {
         for (int i = 0; i < arr2.length; i++) {
+            if (index >= arr1.length) {
+                break;
+            }
             arr1[index++] = arr2[i];
         }
         return index;
@@ -17,5 +20,16 @@ public class ArrayUtils {
             byteArray[index++] = arr[i];
         }
         return byteArray;
+    }
+
+    public static String byteArrayToString(byte[] arr) {
+        String str = "[";
+        for (int i = 0; i < arr.length; i++) {
+            str += arr[i];
+            str += i == arr.length - 1
+                ? "]"
+                : ", ";
+        }
+        return str;
     }
 }
