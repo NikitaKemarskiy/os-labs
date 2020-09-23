@@ -14,25 +14,16 @@ public class Main {
             int ind1 = allocator.alloc(24);
             int ind2 = allocator.alloc(32);
 
-            try {
-                allocator.realloc(ind1, 48);
-            } catch (InvalidIndexException err) {
-                System.err.println(err);
-            }
+            allocator.write(ind1, new byte[]{1, 4, 5, 8});
+            allocator.write(ind2, new byte[]{9, 6, 2, 125, 6});
 
-//            int ind1 = allocator.alloc(32);
-//            int ind2 = allocator.alloc(32);
-//
-//            allocator.write(ind1, new byte[]{1, 4, 5, 8});
-//            allocator.write(ind2, new byte[]{9, 6, 2, 125, 6});
-//
-//            allocator.realloc(ind2, 24);
+            // allocator.realloc(ind2, 24);
 
             // System.out.println("Block " + ind1 + ": " + ArrayUtils.byteArrayToString(allocator.read(ind1)));
             // System.out.println("Block " + ind2 + ": " + ArrayUtils.byteArrayToString(allocator.read(ind2)));
 
             System.out.println(allocator.dump());
-        } catch (InvalidSizeException err) {
+        } catch (InvalidSizeException | InvalidIndexException err) {
             System.err.println(err);
             System.exit(1);
         }

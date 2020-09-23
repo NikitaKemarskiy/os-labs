@@ -130,4 +130,4 @@ System.out.println(allocator.dump());
 ```
 
 ##### Output
-![reallocating block](img/5.png)
+![reallocating block](img/6.png)
