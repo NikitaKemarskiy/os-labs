@@ -81,7 +81,7 @@ System.out.println(allocator.dump());
 ```
 
 ##### Output
-![allocating 24 and 32 bytes](img/2.png)
+![allocating 24 and 32 bytes](img/3.png)
 ---
 
 ### The freeing of *24* bytes of memory
@@ -97,7 +97,7 @@ System.out.println(allocator.dump());
 ```
 
 ##### Output
-![freeing 24 bytes block)](img/3.png)
+![freeing 24 bytes block)](img/4.png)
 ---
 
 ### The allocating of *24* and *32* bytes of memory
@@ -114,7 +114,7 @@ System.out.println(allocator.dump());
 ```
 
 ##### Output
-![freeing 24 and 32 bytes blocks](img/4.png)
+![freeing 24 and 32 bytes blocks](img/5.png)
 ---
 
 ### The allocating of *80* bytes of memory and then realloc it
