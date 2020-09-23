@@ -1,7 +1,5 @@
 package com.nikita.util;
 
-import com.nikita.allocator.InvalidSizeException;
-
 public class ArrayUtils {
     private ArrayUtils() {}
 
@@ -10,5 +8,14 @@ public class ArrayUtils {
             arr1[index++] = arr2[i];
         }
         return index;
+    }
+
+    public static byte[] splitByteArray(byte[] arr, int startIndex, int endIndex) {
+        byte[] byteArray = new byte[endIndex - startIndex];
+        int index = 0;
+        for (int i = startIndex; i < endIndex; i++) {
+            byteArray[index++] = arr[i];
+        }
+        return byteArray;
     }
 }

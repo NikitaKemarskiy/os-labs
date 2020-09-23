@@ -8,9 +8,20 @@ public class Header {
     private int sizePrev;
     private boolean free;
 
-    public Header(int size) {
+    public Header(int size, int sizePrev) {
         this.size = size;
+        this.sizePrev = sizePrev;
         this.free = true;
+    }
+
+    public Header(byte[] byteArray) {
+        byte[] sizeByteArray = ArrayUtils.splitByteArray(byteArray, 0, 4);
+        byte[] sizePrevByteArray = ArrayUtils.splitByteArray(byteArray, 4, 8);
+        boolean free = ByteConverter.byteToBoolean(byteArray[8]);
+
+        this.size = ByteConverter.byteArrayToInt(sizeByteArray);
+        this.sizePrev = ByteConverter.byteArrayToInt(sizePrevByteArray);
+        this.free = free;
     }
 
     public int getSize() {
@@ -38,7 +49,7 @@ public class Header {
     }
 
     public byte[] toByteArray() {
-        byte[] byteArray = new byte[12];
+        byte[] byteArray = new byte[HEADER_SIZE];
 
         byte[] sizeByteArray = ByteConverter.intToByteArray(size);
         byte[] sizePrevByteArray = ByteConverter.intToByteArray(sizePrev);
@@ -49,6 +60,11 @@ public class Header {
         byteArray[index] = ByteConverter.booleanToByte(free);
 
         return byteArray;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("Size: %d; SizePrev: %d; Free: %b", size, sizePrev, free);
     }
 
     public final static int HEADER_SIZE = 12;
