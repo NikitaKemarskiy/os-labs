@@ -132,14 +132,18 @@ public class Allocator {
         // Realloc needs more size than block has now or less size
         // but remainder of the size isn't enough to create new block
         else if (size != header.getSize()) {
+            int dataSize = Math.min(size, header.getSize());
             byte[] byteArray = ArrayUtils.splitByteArray(
                 buffer,
                 index + Header.HEADER_SIZE,
-                index + Header.HEADER_SIZE + header.getSize()
+                index + Header.HEADER_SIZE + dataSize
             );
+
             // Alloc new block
             int newIndex = alloc(size);
+            System.out.println(newIndex + " " + byteArray.length);
             write(newIndex, byteArray);
+
             // Free old block
             free(index);
             // Return new index
