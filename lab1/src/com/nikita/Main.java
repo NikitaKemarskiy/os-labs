@@ -17,7 +17,7 @@ public class Main {
             allocator.write(ind1, new byte[]{1, 4, 5, 8});
             allocator.write(ind2, new byte[]{9, 6, 2, 125, 6});
 
-            // allocator.realloc(ind2, 24);
+            allocator.realloc(ind2, 24);
 
             // System.out.println("Block " + ind1 + ": " + ArrayUtils.byteArrayToString(allocator.read(ind1)));
             // System.out.println("Block " + ind2 + ": " + ArrayUtils.byteArrayToString(allocator.read(ind2)));

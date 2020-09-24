@@ -5,7 +5,6 @@ import com.nikita.util.ArrayUtils;
 public class Allocator {
     private int size;
     private byte[] buffer;
-    private int startUnallocIndex;
 
     private final static int DEFAULT_SIZE = 1024;
 
@@ -14,7 +13,7 @@ public class Allocator {
     }
 
     private boolean checkIndex(int index) {
-        return startUnallocIndex > index && index >= 0 && index % 4 == 0 && index < size - Header.HEADER_SIZE;
+        return index >= 0 && index % 4 == 0 && index < size - Header.HEADER_SIZE;
     }
 
     private boolean checkBlockSize(int size) {
@@ -29,14 +28,12 @@ public class Allocator {
     private void writeHeader(int index, Header header) {
         byte[] headerByteArray = header.toByteArray();
         ArrayUtils.insertByteArray(buffer, headerByteArray, index);
-        // Update start unalloc index
-        updateStartUnallocIndex(index + Header.HEADER_SIZE + header.getSize());
     }
 
     private void updateNextHeaderSizePrev(int index) {
         Header header = getHeader(index);
         int nextIndex = index + Header.HEADER_SIZE + header.getSize();
-        if (startUnallocIndex <= nextIndex || nextIndex > size - Header.HEADER_SIZE) {
+        if (nextIndex > size - Header.HEADER_SIZE) {
             return;
         }
 
@@ -44,12 +41,6 @@ public class Allocator {
         nextHeader.setSizePrev(header.getSize());
 
         writeHeader(nextIndex, nextHeader);
-    }
-
-    private void updateStartUnallocIndex(int newStartUnallocIndex) {
-        startUnallocIndex = startUnallocIndex < newStartUnallocIndex
-            ? newStartUnallocIndex
-            : startUnallocIndex;
     }
 
     // Split block into two parts
@@ -68,7 +59,8 @@ public class Allocator {
     public Allocator() {
         size = DEFAULT_SIZE;
         buffer = new byte[DEFAULT_SIZE];
-        startUnallocIndex = 0;
+        Header header = new Header(size - Header.HEADER_SIZE, 0);
+        writeHeader(0, header);
     }
 
     public Allocator(int size) throws InvalidSizeException {
@@ -77,7 +69,8 @@ public class Allocator {
         }
         this.size = size;
         buffer = new byte[DEFAULT_SIZE];
-        startUnallocIndex = 0;
+        Header header = new Header(size - Header.HEADER_SIZE, 0);
+        writeHeader(0, header);
     }
 
     // Alloc memory for the new block
@@ -88,20 +81,16 @@ public class Allocator {
 
         // Get first header
         int index = 0;
-        Header header = startUnallocIndex > 0
-            ? getHeader(index)
-            : new Header(size, 0);
+        Header header = getHeader(index);
 
         // Iterate through blocks to find
         // free with sufficient size
-        while (startUnallocIndex > index && (!header.isFree() || header.getSize() < size)) {
+        while (!header.isFree() || header.getSize() < size) {
             index += Header.HEADER_SIZE + header.getSize();
             if (index > this.size - Header.HEADER_SIZE - size) {
                 return -1;
             }
-            header = startUnallocIndex <= index
-                ? new Header(size, header.getSize())
-                : getHeader(index);
+            header = getHeader(index);
         }
 
         // Block can be divided into two blocks
@@ -117,7 +106,6 @@ public class Allocator {
 
         // Set header as occupied
         header.setFree(false);
-
         // Write header to buffer
         writeHeader(index, header);
 
@@ -136,10 +124,8 @@ public class Allocator {
             // Split blocks into two
             int splitIndex = index + Header.HEADER_SIZE + size;
             splitBlock(header, size, splitIndex);
-
             // Set header as occupied
             header.setFree(false);
-
             // Write header to buffer
             writeHeader(index, header);
         }
@@ -176,7 +162,7 @@ public class Allocator {
         int prevIndex = index - Header.HEADER_SIZE - header.getSizePrev();
 
         // Concat with next free blocks
-        while (nextIndex < startUnallocIndex && nextIndex < size - Header.HEADER_SIZE) {
+        while (nextIndex < size - Header.HEADER_SIZE) {
             Header nextHeader = getHeader(nextIndex);
             if (!nextHeader.isFree()) {
                 break;
@@ -216,17 +202,13 @@ public class Allocator {
     public String dump() {
         String dump = "";
         int index = 0;
-        int emptyBytes = size;
 
         // Iterate through blocks
-        while (index < startUnallocIndex) {
+        while (index < size) {
             Header header = getHeader(index);
-            emptyBytes -= Header.HEADER_SIZE + header.getSize();
             dump += header.toString() + '\n';
             index += Header.HEADER_SIZE + header.getSize();
         }
-
-        dump += String.format("<Empty %d bytes>", emptyBytes);
 
         return dump;
     }
