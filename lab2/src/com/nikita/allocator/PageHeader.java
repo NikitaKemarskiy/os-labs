@@ -4,35 +4,22 @@ import com.nikita.util.ArrayUtils;
 import com.nikita.util.ByteConverter;
 
 public class PageHeader {
-    private boolean free;
     private PageType pageType;
     private int blockNumberOfPages;
     private int blockPageIndex;
 
     public PageHeader() {
-        free = true;
         pageType = PageType.EMPTY;
     }
 
     public PageHeader(byte[] byteArray) {
-        boolean free = ByteConverter.byteToBoolean(byteArray[0]);
+        byte[] blockTypeByteArray = ArrayUtils.splitByteArray(byteArray, 0, 4);
+        byte[] blockNumberOfPagesByteArray = ArrayUtils.splitByteArray(byteArray, 4, 8);
+        byte[] blockPageIndexByteArray = ArrayUtils.splitByteArray(byteArray, 8, 12);
 
-        byte[] blockTypeByteArray = ArrayUtils.splitByteArray(byteArray, 4, 8);
-        byte[] blockNumberOfPagesByteArray = ArrayUtils.splitByteArray(byteArray, 8, 12);
-        byte[] blockPageIndexByteArray = ArrayUtils.splitByteArray(byteArray, 12, 16);
-
-        this.free = free;
         this.pageType = PageType.valueOf(ByteConverter.byteArrayToInt(blockTypeByteArray));
         this.blockNumberOfPages = ByteConverter.byteArrayToInt(blockNumberOfPagesByteArray);
         this.blockPageIndex = ByteConverter.byteArrayToInt(blockPageIndexByteArray);
-    }
-
-    public boolean isFree() {
-        return free;
-    }
-
-    public void setFree(boolean free) {
-        this.free = free;
     }
 
     public byte[] toByteArray() {
@@ -42,9 +29,7 @@ public class PageHeader {
         byte[] blockNumberOfPagesArray = ByteConverter.intToByteArray(blockNumberOfPages);
         byte[] blockPageIndexArray = ByteConverter.intToByteArray(blockPageIndex);
 
-        byteArray[0] = ByteConverter.booleanToByte(free);
-        int index = 4;
-
+        int index = 0;
         index = ArrayUtils.insertByteArray(byteArray, blockTypeArray, index);
         index = ArrayUtils.insertByteArray(byteArray, blockNumberOfPagesArray, index);
         index = ArrayUtils.insertByteArray(byteArray, blockPageIndexArray, index);
@@ -52,18 +37,38 @@ public class PageHeader {
         return byteArray;
     }
 
+    public PageType getPageType() {
+        return pageType;
+    }
+
+    public void setPageType(PageType pageType) {
+        this.pageType = pageType;
+    }
+
     @Override
     public String toString() {
         return String.format(
-            "Free: %b, Page type: %s, Block number of pages: %d, Block page index: %d",
-            free,
+            "Page type: %s, Block number of pages: %d, Block page index: %d",
             pageType,
             blockNumberOfPages,
             blockPageIndex
         );
     }
 
-    public final static int PAGE_HEADER_SIZE = 16;
-    public final static int PAGE_SIZE = 128;
+    public static PageType getPageTypeBySize(int size) {
+        int totalSize = size + BlockHeader.BLOCK_HEADER_SIZE;
+        if (totalSize > 32) {
+            return PageType.BLOCK_PAGE_SIZE;
+        } else if (totalSize > 16) {
+            return PageType.BLOCK_SIZE_32;
+        } else if (totalSize > 4) {
+            return PageType.BLOCK_SIZE_16;
+        } else {
+            return PageType.BLOCK_SIZE_4;
+        }
+    }
+
+    public final static int PAGE_HEADER_SIZE = 12;
+    public final static int PAGE_SIZE = 360;
     public final static int PAGE_TOTAL_SIZE = PAGE_HEADER_SIZE + PAGE_SIZE;
 }

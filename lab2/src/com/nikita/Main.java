@@ -9,8 +9,19 @@ public class Main {
     public static void main(String[] args) {
 
         try {
-            Allocator allocator = new Allocator(145);
+            Allocator allocator = new Allocator(600);
             System.out.println(allocator.buffer.length);
+
+            int ind1 = allocator.alloc(10);
+            int ind2 = allocator.alloc(16);
+            int ind3 = allocator.alloc(12);
+            int ind4 = allocator.alloc(18);
+
+            System.out.println(ind1);
+            System.out.println(ind2);
+            System.out.println(ind3);
+            System.out.println(ind4);
+
 
 //            int ind1 = allocator.alloc(24);
 //            int ind2 = allocator.alloc(32);

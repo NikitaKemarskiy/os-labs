@@ -11,13 +11,6 @@ public class Allocator {
 //    private boolean checkIndex(int index) {
 //        return index >= 0 && index % 4 == 0 && index < size - BlockHeader.BLOCK_HEADER_SIZE;
 //    }
-//
-//    private boolean checkBlockSize(int size) {
-//        int pagesNumber = this.size / PageHeader.PAGE_TOTAL_SIZE;
-//        return
-//            size > 0 &&
-//            size <= this.size - pagesNumber * PageHeader.PAGE_HEADER_SIZE - pagesNumber * BlockHeader.BLOCK_HEADER_SIZE;
-//    }
 
     private int getPageHeaderIndex(int index) {
         int pagesNumber = index / PageHeader.PAGE_TOTAL_SIZE;
@@ -30,10 +23,25 @@ public class Allocator {
         return new PageHeader(pageHeaderByteArray);
     }
 
-//    private BlockHeader getHeader(int index) {
-//        byte[] headerByteArray = ArrayUtils.splitByteArray(buffer, index, index + BlockHeader.BLOCK_HEADER_SIZE);
-//        return new BlockHeader(headerByteArray);
-//    }
+    private int getPageFreeBlockIndex(int index) {
+        PageHeader pageHeader = getPageHeader(index);
+        PageType pageType = pageHeader.getPageType();
+
+        int blockHeaderIndex = index + PageHeader.PAGE_HEADER_SIZE;
+        while (blockHeaderIndex < index + PageHeader.PAGE_TOTAL_SIZE) {
+            BlockHeader blockHeader = getBlockHeader(blockHeaderIndex);
+            if (blockHeader.isFree()) {
+                return blockHeaderIndex;
+            }
+            blockHeaderIndex += BlockHeader.BLOCK_HEADER_SIZE + pageType.getSize();
+        }
+        return -1;
+    }
+
+    private BlockHeader getBlockHeader(int index) {
+        byte[] blockHeaderByteArray = ArrayUtils.splitByteArray(buffer, index, index + BlockHeader.BLOCK_HEADER_SIZE);
+        return new BlockHeader(blockHeaderByteArray);
+    }
 
     private int getValidSize(int size) {
         return size % PageHeader.PAGE_TOTAL_SIZE == 0
@@ -41,10 +49,15 @@ public class Allocator {
             : PageHeader.PAGE_TOTAL_SIZE * (size / PageHeader.PAGE_TOTAL_SIZE + 1);
     }
 
-//    private void writeHeader(int index, BlockHeader blockHeader) {
-//        byte[] headerByteArray = blockHeader.toByteArray();
-//        ArrayUtils.insertByteArray(buffer, headerByteArray, index);
-//    }
+    private void writePageHeader(int index, PageHeader pageHeader) {
+        byte[] pageHeaderByteArray = pageHeader.toByteArray();
+        ArrayUtils.insertByteArray(buffer, pageHeaderByteArray, index);
+    }
+
+    private void writeBlockHeader(int index, BlockHeader blockHeader) {
+        byte[] blockHeaderByteArray = blockHeader.toByteArray();
+        ArrayUtils.insertByteArray(buffer, blockHeaderByteArray, index);
+    }
 
     private void initPages() {
         PageHeader pageHeader = new PageHeader();
@@ -53,6 +66,17 @@ public class Allocator {
         while (index < buffer.length) {
             ArrayUtils.insertByteArray(buffer, pageHeaderByteArray, index);
             index += PageHeader.PAGE_TOTAL_SIZE;
+        }
+    }
+
+    private void initPage(int index, PageHeader pageHeader) {
+        PageType pageType = pageHeader.getPageType();
+        writePageHeader(index, pageHeader);
+        BlockHeader blockHeader = new BlockHeader();
+        int blockHeaderIndex = index + PageHeader.PAGE_HEADER_SIZE;
+        while (blockHeaderIndex < index + PageHeader.PAGE_TOTAL_SIZE) {
+            writeBlockHeader(blockHeaderIndex, blockHeader);
+            blockHeaderIndex += BlockHeader.BLOCK_HEADER_SIZE + pageType.getSize();
         }
     }
 
@@ -70,42 +94,42 @@ public class Allocator {
 
     // Alloc memory for the new block
     public int alloc(int size) {
-//        if (!checkBlockSize(size)) {
-//            throw new InvalidSizeException();
-//        }
-//
-//        // Get first header
-//        int index = 0;
-//        BlockHeader blockHeader = getHeader(index);
-//
-//        // Iterate through blocks to find
-//        // free with sufficient size
-//        while (!blockHeader.isFree() || blockHeader.getSize() < size) {
-//            index += BlockHeader.HEADER_SIZE + blockHeader.getSize();
-//            if (index > this.size - BlockHeader.HEADER_SIZE - size) {
-//                return -1;
-//            }
-//            blockHeader = getHeader(index);
-//        }
-//
-//        // Block can be divided into two blocks
-//        if (blockHeader.getSize() > size + BlockHeader.HEADER_SIZE) {
-//            // Split blocks into two
-//            int splitIndex = index + BlockHeader.HEADER_SIZE + size;
-//            try {
-//                splitBlock(blockHeader, size, splitIndex);
-//            } catch (InvalidIndexException err) {
-//                System.err.println(err);
-//            }
-//        }
-//
-//        // Set header as occupied
-//        blockHeader.setFree(false);
-//        // Write header to buffer
-//        writeHeader(index, blockHeader);
-//
-//        return index;
-        return 0;
+        PageType pageType = PageHeader.getPageTypeBySize(size);
+
+        // Get first page header
+        int pageIndex = 0;
+
+        // Iterate through pages to find
+        // free with sufficient blocks size type
+        int index = -1;
+        while (index == -1 && pageIndex < this.size - PageHeader.PAGE_HEADER_SIZE) {
+            PageHeader pageHeader = getPageHeader(pageIndex);
+            PageType currentPageType = pageHeader.getPageType();
+
+            // Current page type matches needed type
+            if (currentPageType == pageType) {
+                int freeBlockIndex = getPageFreeBlockIndex(pageIndex);
+                index = freeBlockIndex >= 0
+                    ? freeBlockIndex
+                    : index;
+            }
+            // Current page type is empty
+            else if (currentPageType == PageType.EMPTY) {
+                pageHeader.setPageType(pageType);
+                initPage(pageIndex, pageHeader);
+                index = pageIndex + PageHeader.PAGE_HEADER_SIZE;
+            }
+
+            pageIndex += PageHeader.PAGE_TOTAL_SIZE;
+        }
+
+        if (index >= 0) {
+            BlockHeader blockHeader = getBlockHeader(index);
+            blockHeader.setFree(false);
+            writeBlockHeader(index, blockHeader);
+        }
+
+        return index;
     }
 
     public int realloc(int index, int size) throws InvalidIndexException, InvalidSizeException {
