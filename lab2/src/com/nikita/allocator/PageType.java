@@ -8,7 +8,7 @@ public enum PageType {
     BLOCK_SIZE_4(4, "4B blocks"),
     BLOCK_SIZE_16(16, "16B blocks"),
     BLOCK_SIZE_32(32, "32B blocks"),
-    BLOCK_PAGE_SIZE(Integer.MAX_VALUE, "Page size block");
+    BLOCK_PAGE_SIZE(PageHeader.PAGE_SIZE - BlockHeader.BLOCK_HEADER_SIZE, "Page size block");
 
     private int size;
     private String alias;
