@@ -1,4 +1,4 @@
-# Lab 1 - Allocator
+# Lab 2 - Allocator with paging
 ## DESCRIPTION
 ## About allocator
 
