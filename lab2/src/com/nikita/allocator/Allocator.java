@@ -2,6 +2,8 @@ package com.nikita.allocator;
 
 import com.nikita.util.ArrayUtils;
 
+import java.util.Arrays;
+
 public class Allocator {
     private int size;
     public byte[] buffer;
@@ -139,7 +141,12 @@ public class Allocator {
         BlockHeader blockHeader = getBlockHeader(index);
         blockHeader.setFree(true);
         writeBlockHeader(index, blockHeader);
-        return alloc(size);
+
+        byte[] data = read(index);
+        int reallocIndex = alloc(size);
+        write(reallocIndex, data);
+
+        return reallocIndex;
     }
 
     // Free the block
@@ -161,6 +168,15 @@ public class Allocator {
         while (index < size) {
             PageHeader pageHeader = getPageHeader(index);
             dump += pageHeader.toString() + '\n';
+
+            byte[] pageData = ArrayUtils.splitByteArray(
+                buffer,
+                index + PageHeader.PAGE_HEADER_SIZE,
+                index + PageHeader.PAGE_TOTAL_SIZE
+            );
+            dump += ArrayUtils.byteArrayToString(pageData);
+            dump += '\n';
+
             index += PageHeader.PAGE_TOTAL_SIZE;
         }
 
