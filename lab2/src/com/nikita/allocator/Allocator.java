@@ -138,11 +138,13 @@ public class Allocator {
         if (!checkIndex(index)) {
             throw new InvalidIndexException();
         }
+
+        byte[] data = read(index);
+
         BlockHeader blockHeader = getBlockHeader(index);
         blockHeader.setFree(true);
         writeBlockHeader(index, blockHeader);
 
-        byte[] data = read(index);
         int reallocIndex = alloc(size);
         write(reallocIndex, data);
 
@@ -161,7 +163,7 @@ public class Allocator {
 
     // Dump current allocator state
     public String dump() {
-        String dump = "";
+        String dump = String.format("Size: %dB%n", size);
         int index = 0;
 
         // Iterate through blocks
