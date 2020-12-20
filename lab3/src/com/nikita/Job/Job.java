@@ -15,7 +15,7 @@ public class Job {
         this.id = currentId++;
         this.executionTime = executionTime;
         this.priority = priority;
-        createdAt = (new Date().getTime());
+        this.createdAt = (new Date().getTime());
         System.out.printf(">>> Job [%d] created%n", id);
     }
 

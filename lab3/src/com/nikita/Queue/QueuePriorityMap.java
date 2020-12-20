@@ -12,13 +12,13 @@ public class QueuePriorityMap<T> {
         this.minPriority = minPriority;
         this.maxPriority = maxPriority;
         queuePriorityMap = new HashMap<>();
-        for (int priority = minPriority; priority < maxPriority; priority++) {
-            queuePriorityMap.put(priority, new Queue(priority));
+        for (int priority = minPriority; priority <= maxPriority; priority++) {
+            queuePriorityMap.put(priority, new Queue());
         }
     }
 
     public T pop() {
-        for (int priority = minPriority; priority < maxPriority; priority++) {
+        for (int priority = minPriority; priority <= maxPriority; priority++) {
             Queue<T> queue = queuePriorityMap.get(priority);
             if (!queue.isEmpty()) {
                 return queue.pop();

@@ -1,23 +1,16 @@
 package com.nikita.Queue;
 
-import java.util.ArrayList;
-
 public class Queue<T> {
     private Item<T> head;
-    private int priority;
 
     private Item<T> getLast() {
         Item<T> curr = head;
 
-        while (head != null && head.getNext() != null) {
-            curr = head.getNext();
+        while (curr != null && curr.getNext() != null) {
+            curr = curr.getNext();
         }
 
         return curr;
-    }
-
-    public Queue(int priority) {
-        this.priority = priority;
     }
 
     public T pop() {

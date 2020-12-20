@@ -18,7 +18,7 @@ public class Main {
             Integer.parseInt(config.getProperty("priority.max"))
         );
 
-        Thread dispatcherThread = getDispatcherThread(queuePriorityMap);
+        Thread dispatcherThread = getDispatcherThread(queuePriorityMap, config);
         dispatcherThread.start();
 
         Thread jobImitatorThread = getJobImitatorThread(queuePriorityMap, config);
@@ -37,8 +37,14 @@ public class Main {
         return config;
     }
 
-    private static Thread getDispatcherThread(QueuePriorityMap queuePriorityMap) {
-        Dispatcher dispatcher = new Dispatcher(queuePriorityMap);
+    private static Thread getDispatcherThread(
+        QueuePriorityMap queuePriorityMap,
+        Properties config
+    ) {
+        Dispatcher dispatcher = new Dispatcher(
+            queuePriorityMap,
+            Integer.parseInt(config.getProperty("imitator.totalJobs"))
+        );
 
         return new Thread(dispatcher);
     }
@@ -52,8 +58,7 @@ public class Main {
             Integer.parseInt(config.getProperty("job.minExecutionTime")),
             Integer.parseInt(config.getProperty("job.maxExecutionTime")),
             Integer.parseInt(config.getProperty("imitator.minNextJobInterval")),
-            Integer.parseInt(config.getProperty("imitator.maxNextJobInterval")),
-            Integer.parseInt(config.getProperty("imitator.totalJobs"))
+            Integer.parseInt(config.getProperty("imitator.maxNextJobInterval"))
         );
 
         return new Thread(jobImitator);
