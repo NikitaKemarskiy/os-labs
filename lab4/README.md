@@ -21,13 +21,13 @@ In our application I tried to use all 3 rules sequentially.
 
 ## Example
 ### Initial state
-![initState](imgimages/initState.png)
+![initState](img/initState.png)
 
 In this example we have 8 tasks and 8 resources. Let's plan it!
 
 ### First step
 
-![firstStep](imgimages/firstStep.png)
+![firstStep](img/firstStep.png)
 
 Here we used our first rule. We found the row with only 1 unit.
 
@@ -39,7 +39,7 @@ All the same as in first step.
 
 ### Third step
 
-![thirdStep](imgimages/thirdStep.png)
+![thirdStep](img/thirdStep.png)
 
 Here we used our second rule. We found the column with only 1 unit.
 
@@ -48,7 +48,7 @@ Here we used our second rule. We found the column with only 1 unit.
 At least when no rows and no columns with only 1 unit, we used our third rule
 We just simply take first unit and make reduce.
 
-![lastSteps](imgimages/lastSteps.png)
+![lastSteps](img/lastSteps.png)
 
 ## Result
 
