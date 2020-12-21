@@ -33,7 +33,7 @@ Here we used our first rule. We found the row with only 1 unit.
 
 ### Second step
 
-![secondStep](imgimages/secondStep.png)
+![secondStep](img/secondStep.png)
 
 All the same as in first step.
 
